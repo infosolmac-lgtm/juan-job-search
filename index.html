@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13243a">
+<title>Job Search</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Job Search">
+<style>
+:root{--navy:#13243a;--blue:#2764e7;--bg:#f4f6fa;--card:#fff;--text:#172033;--muted:#64748b;--line:#e2e8f0;--green:#087f5b;--amber:#a15c00;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--navy);color:white;padding:22px 16px 18px}header h1{margin:0;font-size:24px}header p{margin:6px 0 0;color:#d4deec;font-size:14px}
+main{max-width:1100px;margin:auto;padding:16px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:16px}.metric{background:white;border:1px solid var(--line);border-radius:14px;padding:13px}.metric b{display:block;font-size:23px}.metric span{font-size:12px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.toolbar input,.toolbar select,.field input,.field select,.field textarea{font:inherit;border:1px solid #cbd5e1;border-radius:10px;padding:10px;background:white;min-width:0}.toolbar input{flex:1;min-width:160px}
+button,.button{font:inherit;border:0;border-radius:10px;padding:10px 13px;background:var(--blue);color:white;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}.secondary{background:#e8eef8;color:var(--navy)}.danger{background:#fff0ef;color:var(--red)}.small{font-size:13px;padding:7px 9px}
+.sectiontitle{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:20px 0 8px}.sectiontitle h2{font-size:18px;margin:0}.hint{font-size:13px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.job{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;box-shadow:0 2px 8px #15274408}.job h3{margin:0 0 4px;font-size:17px}.job .company{font-weight:600;color:#334155}.job .meta{color:var(--muted);font-size:13px;margin:5px 0 10px;overflow-wrap:anywhere}.tags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.tag{font-size:12px;background:#eef2f7;color:#334155;padding:4px 8px;border-radius:99px}.tag.green{background:#e6f7ef;color:var(--green)}.tag.amber{background:#fff3d9;color:var(--amber)}.job p{margin:7px 0;font-size:14px}.job .actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.tag.red{background:#fff0ef;color:var(--red)}.statusquick{font:inherit;font-size:13px;border:1px solid #cbd5e1;border-radius:10px;padding:7px 8px;background:white;max-width:100%}.backupwarn{background:#fff3d9;color:var(--amber);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;display:none}
+.job p{white-space:pre-line}.syncstate{margin:6px 0 0;font-size:12px;color:#d4deec}.job a.tel{color:var(--blue);font-weight:650}
+.empty{padding:30px;text-align:center;color:var(--muted);background:white;border-radius:14px;border:1px dashed #cbd5e1}
+dialog{width:min(680px,calc(100% - 22px));max-height:90vh;overflow:auto;border:0;border-radius:16px;padding:0;box-shadow:0 20px 60px #0003}dialog::backdrop{background:#0b1728a8}.modalhead{background:var(--navy);color:white;padding:16px 18px;display:flex;justify-content:space-between;align-items:center}.modalhead h2{margin:0;font-size:19px}.modalbody{padding:16px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:13px;color:#475569;font-weight:650}.field input,.field select,.field textarea{width:100%}.field.full{grid-column:1/-1}.field textarea{min-height:80px}.formactions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}.notice{font-size:12px;color:var(--muted);margin-top:15px;border-top:1px solid var(--line);padding-top:12px}
+footer{max-width:1100px;margin:auto;padding:8px 16px 28px;color:var(--muted);font-size:12px}
+@media(max-width:700px){.cards{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.metric{padding:10px}.metric b{font-size:20px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}header{padding-top:calc(18px + env(safe-area-inset-top))}main{padding:12px}}
+</style>
+</head>
+<body>
+<header><h1>Job Search</h1><p>One place for vacancies, applications and follow-ups</p><p class="syncstate" id="syncState"></p></header>
+<main>
+<div class="metrics">
+ <div class="metric"><b id="countAll">0</b><span>All leads</span></div>
+ <div class="metric"><b id="countApplied">0</b><span>Applied / contacted</span></div>
+ <div class="metric"><b id="countFollow">0</b><span>Follow-ups due</span></div>
+</div>
+<div id="backupWarn" class="backupwarn"></div>
+<div class="toolbar">
+ <input id="search" placeholder="Search job, employer, city…" aria-label="Search jobs">
+ <select id="countryFilter" aria-label="Filter country"><option value="">All countries</option><option>Netherlands</option><option>Belgium</option><option>Finland</option><option>Poland</option><option>Spain</option></select>
+ <select id="statusFilter" aria-label="Filter status"><option value="">All statuses</option></select>
+ <button id="addBtn">＋ Add job</button>
+</div>
+<div class="sectiontitle"><h2>Opportunities</h2><span class="hint" id="shownCount"></span></div>
+<div id="cards" class="cards"></div>
+<div class="sectiontitle"><h2>Backup & data</h2></div>
+<div class="toolbar">
+ <button class="secondary" id="exportBtn">Export backup</button>
+ <label class="button secondary" for="importFile">Import backup</label><input id="importFile" type="file" accept="application/json" hidden>
+ <button class="secondary" id="syncBtn">Account &amp; sync</button>
+ <button class="secondary" id="installHelp">iPhone setup</button>
+</div>
+<p class="hint">With an account signed in, every change is saved on this device first and then synced to your private database, so Mac and iPhone show the same data. Without a connection, changes stay on the device and sync when you are back online. Export a backup now and then as a second copy.</p>
+</main>
+<footer>Verify each vacancy with the employer before relying on it. “Lead” does not mean the job is confirmed open.</footer>
+
+<dialog id="jobDialog">
+<div class="modalhead"><h2 id="dialogTitle">Add opportunity</h2><button id="closeDialog" class="secondary small">Close</button></div>
+<form id="jobForm" class="modalbody">
+<input type="hidden" id="jobId">
+<div class="formgrid">
+<div class="field"><label for="title">Job title *</label><input id="title" required></div>
+<div class="field"><label for="employer">Employer / agency *</label><input id="employer" required></div>
+<div class="field"><label for="country">Country</label><select id="country"><option>Netherlands</option><option>Belgium</option><option>Finland</option><option>Poland</option><option>Spain</option><option>Other</option></select></div>
+<div class="field"><label for="location">City / location</label><input id="location"></div>
+<div class="field full"><label for="url">Official vacancy link</label><input id="url" type="url" placeholder="https://…"></div>
+<div class="field"><label for="status">Status</label><select id="status"></select></div>
+<div class="field"><label for="dateChecked">Last checked</label><input id="dateChecked" type="date"></div>
+<div class="field"><label for="pay">Pay / hours</label><input id="pay" placeholder="e.g. €15/hour; 40 h/week"></div>
+<div class="field"><label for="housing">Accommodation</label><input id="housing" placeholder="Cost, private room, bathroom…"></div>
+<div class="field"><label for="transport">Transport</label><input id="transport" placeholder="Provided / not confirmed"></div>
+<div class="field"><label for="languages">Language / certificates</label><input id="languages"></div>
+<div class="field"><label for="contactName">Recruiter / contact name</label><input id="contactName" autocomplete="off"></div>
+<div class="field"><label for="contactPhone">Contact phone</label><input id="contactPhone" type="tel" autocomplete="off" placeholder="+31 …"></div>
+<div class="field full"><label for="contactEmail">Contact email</label><input id="contactEmail" type="email" autocomplete="off"></div>
+<div class="field"><label for="applicationDate">Application / email date</label><input id="applicationDate" type="date"></div>
+<div class="field"><label for="followUp">Next follow-up date</label><input id="followUp" type="date"></div>
+<div class="field full"><label for="response">Response / correspondence notes</label><textarea id="response"></textarea></div>
+<div class="field full"><label for="nextAction">Next action</label><textarea id="nextAction" placeholder="e.g. Ask recruiter if vacancy is open and confirm housing deductions"></textarea></div>
+<div class="field full"><label for="notes">Other notes / verification evidence</label><textarea id="notes"></textarea></div>
+</div>
+<div class="formactions"><button type="button" id="deleteBtn" class="danger" style="margin-right:auto;display:none">Delete</button><button type="button" id="cancelBtn" class="secondary">Cancel</button><button type="submit">Save job</button></div>
+<div class="notice">Keep vacancy status, application status and recruiter response accurate. Do not record an application as sent until you have actually submitted it.</div>
+</form>
+</dialog>
+<dialog id="authDialog"><div class="modalhead"><h2>Account &amp; sync</h2><button id="closeAuth" class="secondary small" type="button">Close</button></div>
+<div class="modalbody">
+<div id="authSignedIn" style="display:none"><p id="authWho"></p><div class="formactions"><button type="button" id="signOutBtn" class="danger" style="margin-right:auto">Sign out</button><button type="button" id="syncNowBtn">Sync now</button></div></div>
+<form id="authForm"><div class="field"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required></div><div class="field" style="margin-top:10px"><label for="authPass">Password</label><input id="authPass" type="password" autocomplete="current-password" required></div><p class="hint" id="authMsg"></p><div class="formactions"><button type="submit">Sign in</button></div></form>
+</div></dialog>
+<dialog id="helpDialog"><div class="modalhead"><h2>Use on iPhone</h2><button id="closeHelp" class="secondary small">Close</button></div><div class="modalbody"><p>For an app-like icon on your iPhone, this project must first be published at a secure HTTPS address.</p><ol><li>Open the published app in Safari.</li><li>Tap the Share button.</li><li>Choose <b>Add to Home Screen</b>.</li><li>Open it from the new icon.</li></ol><p><b>Important:</b> this starter saves data only in the current browser. It does not sync with your Mac or another device. Use Export backup before switching devices. Shared automatic sync needs hosting plus a shared database.</p></div></dialog>
+<script src="config.js"></script>
+<script>
+const STATUSES=["Lead — verify","Verified open","Ready to apply","Email sent","Website application sent","Recruiter replied","Interview","Offer received","Rejected / closed","On hold"];
+const initialJobs=[];
+const APPLIED=["Email sent","Website application sent","Recruiter replied","Interview","Offer received"];
+const CLOSED=["Rejected / closed","Offer received"];
+const EARLY=["Lead — verify","Verified open","Ready to apply","On hold"];
+const STALE_DAYS=3, BACKUP_DAYS=7;
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function todayStr(){return ymd(new Date())}
+function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return ymd(d)}
+function daysSince(str){if(!str)return null;const a=new Date(str+"T00:00:00"),b=new Date(todayStr()+"T00:00:00");return Math.round((b-a)/86400000)}
+const EPOCH="1970-01-01T00:00:00.000Z";
+let jobs=[];
+try{jobs=JSON.parse(localStorage.getItem("juanJobsV1"))||initialJobs; if(!Array.isArray(jobs))jobs=initialJobs;}catch(e){jobs=initialJobs}
+jobs.forEach(j=>{if(!j.updatedAt)j.updatedAt=EPOCH});
+const live=()=>jobs.filter(j=>!j.deleted);
+let session=null;try{session=JSON.parse(localStorage.getItem("juanSbSession"))}catch(e){}
+function persist(){try{localStorage.setItem("juanJobsV1",JSON.stringify(jobs))}catch(e){alert("Could not save data on this device. Export a backup now.")}}
+function save(){persist();render();scheduleSync()}
+function touch(j){j.updatedAt=new Date().toISOString()}
+function lastBackup(){try{return localStorage.getItem("juanJobsLastBackup")}catch(e){return null}}
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+const $=id=>document.getElementById(id);
+function fillStatusSelects(){["status","statusFilter"].forEach(id=>{const el=$(id);const old=el.value;el.innerHTML=(id==="statusFilter"?'<option value="">All statuses</option>':"")+STATUSES.map(s=>`<option>${esc(s)}</option>`).join("");if(STATUSES.includes(old))el.value=old;});}
+fillStatusSelects();
+function render(){
+ const q=$("search").value.toLowerCase(), country=$("countryFilter").value, status=$("statusFilter").value;
+ const today=todayStr();
+ const stamp=j=>j.updatedAt&&j.updatedAt!==EPOCH?j.updatedAt:(j.dateChecked||"");
+ const isDue=j=>j.followUp&&j.followUp<=today&&!CLOSED.includes(j.status);
+ const filtered=live().filter(j=>(!country||j.country===country)&&(!status||j.status===status)&&[j.title,j.employer,j.location,j.country,j.notes,j.nextAction,j.response,j.contactName,j.contactPhone,j.contactEmail].join(" ").toLowerCase().includes(q))
+  .sort((a,b)=>(isDue(b)-isDue(a))||(CLOSED.includes(a.status)-CLOSED.includes(b.status))||(stamp(b).localeCompare(stamp(a))));
+ $("countAll").textContent=live().length;
+ $("countApplied").textContent=live().filter(j=>APPLIED.includes(j.status)).length;
+ $("countFollow").textContent=live().filter(isDue).length;
+ renderBackupWarn();
+ $("shownCount").textContent=`Showing ${filtered.length} of ${live().length}`;
+ $("cards").innerHTML=filtered.length?filtered.map(j=>{
+ const due=isDue(j), applied=APPLIED.includes(j.status), age=daysSince(j.dateChecked), stale=!CLOSED.includes(j.status)&&(age===null||age>=STALE_DAYS);
+ return `<article class="job"><h3>${esc(j.title)}</h3><div class="company">${esc(j.employer)}</div><div class="meta">${esc(j.location||"Location not specified")} · ${esc(j.country)}</div><div class="tags"><span class="tag ${applied?"green":""}">${esc(j.status)}</span>${due?'<span class="tag amber">Follow-up due</span>':""}${stale?'<span class="tag red">Recheck vacancy ('+(age===null?"never checked":age+" days")+')</span>':""}</div>
+ <p><b>Pay / hours:</b> ${esc(j.pay||"Not confirmed")}</p><p><b>Accommodation:</b> ${esc(j.housing||"Not confirmed")}</p><p><b>Transport:</b> ${esc(j.transport||"Not confirmed")}</p>
+ ${(j.contactName||j.contactPhone||j.contactEmail)?`<p><b>Contact:</b> ${esc(j.contactName||"")} ${j.contactPhone?`<a class="tel" href="tel:${esc(String(j.contactPhone).replace(/[^\d+]/g,""))}">${esc(j.contactPhone)}</a>`:""} ${j.contactEmail?`<a class="tel" href="mailto:${esc(j.contactEmail)}">${esc(j.contactEmail)}</a>`:""}</p>`:""}
+ ${j.response?`<p><b>Last response:</b> ${esc(j.response)}</p>`:""}${j.nextAction?`<p><b>Next action:</b> ${esc(j.nextAction)}</p>`:""}
+ <div class="meta">Last checked: ${esc(j.dateChecked||"Not recorded")}${j.applicationDate?" · Applied/contacted: "+esc(j.applicationDate):""}${j.followUp?" · Follow-up: "+esc(j.followUp):""}</div>
+ <div class="actions">${j.url?`<a class="button small" href="${esc(j.url)}" target="_blank" rel="noopener">Open vacancy ↗</a>`:""}<button class="secondary small" onclick="editJob('${esc(j.id)}')">Edit</button><button class="secondary small" onclick="logContact('${esc(j.id)}')">Log call / message</button><button class="secondary small" onclick="markContacted('${esc(j.id)}')">Mark contacted</button><button class="secondary small" onclick="markChecked('${esc(j.id)}')">Mark checked today</button><select class="statusquick" aria-label="Change status" onchange="setStatus('${esc(j.id)}',this.value)">${STATUSES.map(s=>`<option${s===j.status?" selected":""}>${esc(s)}</option>`).join("")}</select></div></article>`
+ }).join(""):'<div class="empty">No matching jobs. Add a new opportunity or change the filters.</div>';
+}
+function openForm(j=null){
+ $("jobForm").reset();$("jobId").value=j?.id||"";$("dialogTitle").textContent=j?"Edit opportunity":"Add opportunity";
+ $("deleteBtn").style.display=j?"inline-flex":"none";
+ ["title","employer","country","location","url","status","dateChecked","pay","housing","transport","languages","contactName","contactPhone","contactEmail","applicationDate","followUp","response","nextAction","notes"].forEach(k=>$(k).value=j?.[k]||"");
+ if(!j){$("country").value="Netherlands";$("status").value="Lead — verify";$("dateChecked").value=todayStr()}
+ $("jobDialog").showModal();
+}
+function editJob(id){const j=jobs.find(x=>x.id===id);if(j)openForm(j)}
+function markContacted(id){const j=jobs.find(x=>x.id===id);if(!j)return;
+ if(EARLY.includes(j.status))j.status="Email sent";
+ if(!j.applicationDate)j.applicationDate=todayStr();
+ if(!j.followUp)j.followUp=addDays(3);
+ j.nextAction=j.nextAction||"Wait for reply; follow up if no response.";touch(j);save()}
+function logContact(id){const j=jobs.find(x=>x.id===id);if(!j)return;const note=prompt("What happened? (call, email, message)");if(note===null||!note.trim())return;
+ const when=new Date().toLocaleString("en-GB",{timeZone:"Europe/Madrid",dateStyle:"short",timeStyle:"short"});
+ j.response="["+when+"] "+note.trim()+(j.response?"\n"+j.response:"");if(!j.applicationDate)j.applicationDate=todayStr();touch(j);save()}
+function markChecked(id){const j=jobs.find(x=>x.id===id);if(!j)return;j.dateChecked=todayStr();touch(j);save()}
+function setStatus(id,v){const j=jobs.find(x=>x.id===id);if(!j||!STATUSES.includes(v))return;j.status=v;touch(j);save()}
+function renderBackupWarn(){const el=$("backupWarn"),lb=lastBackup(),d=lb?daysSince(lb.slice(0,10)):null;
+ if(!live().length||session){el.style.display="none";return}
+ if(d===null){el.textContent="No backup exported yet. Export one now.";el.style.display="block"}
+ else if(d>=BACKUP_DAYS){el.textContent="Last backup: "+d+" days ago. Export a new one.";el.style.display="block"}
+ else el.style.display="none"}
+$("addBtn").onclick=()=>openForm();$("closeDialog").onclick=()=>$("jobDialog").close();$("cancelBtn").onclick=()=>$("jobDialog").close();
+$("jobForm").onsubmit=e=>{e.preventDefault();const id=$("jobId").value||("JOB-"+Date.now());const item={id};["title","employer","country","location","url","status","dateChecked","pay","housing","transport","languages","contactName","contactPhone","contactEmail","applicationDate","followUp","response","nextAction","notes"].forEach(k=>item[k]=$(k).value.trim());touch(item);const ix=jobs.findIndex(j=>j.id===id);if(ix>=0)jobs[ix]=item;else jobs.unshift(item);save();$("jobDialog").close()};
+$("deleteBtn").onclick=()=>{const id=$("jobId").value;if(confirm("Delete this job record?")){const j=jobs.find(x=>x.id===id);if(j){j.deleted=true;touch(j)}save();$("jobDialog").close()}};
+["search","countryFilter","statusFilter"].forEach(id=>$(id).addEventListener(id==="search"?"input":"change",render));
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),jobs},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="juan-job-search-backup-"+todayStr()+".json";a.click();URL.revokeObjectURL(a.href);try{localStorage.setItem("juanJobsLastBackup",new Date().toISOString())}catch(e){}renderBackupWarn()};
+$("importFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());const incoming=Array.isArray(data)?data:data.jobs;if(!Array.isArray(incoming)||incoming.some(x=>!x||typeof x!=="object"||!x.id||!x.title))throw Error("Invalid backup");
+ if(!confirm(`Merge ${incoming.length} records into the ${live().length} on this device? Matching IDs keep the most recently edited version. Nothing is deleted.`)){e.target.value="";return}
+ const map=new Map(jobs.map(j=>[j.id,j]));let added=0,updated=0;
+ incoming.forEach(n=>{n.updatedAt=n.updatedAt||EPOCH;const o=map.get(n.id);if(!o){map.set(n.id,n);added++}else if(n.updatedAt>o.updatedAt){map.set(n.id,n);updated++}});
+ jobs=[...map.values()];save();alert(`Import done. Added: ${added}. Updated: ${updated}.`)}catch(err){alert("Could not import this file. Please select a backup exported by this app.")}e.target.value=""};
+$("installHelp").onclick=()=>$("helpDialog").showModal();$("closeHelp").onclick=()=>$("helpDialog").close();
+
+/* ---------- Cloud sync (Supabase REST, no libraries) ---------- */
+const CFG=window.APP_CONFIG||{};
+const SYNC_ON=!!(CFG.SUPABASE_URL&&CFG.SUPABASE_ANON_KEY);
+let syncing=false,syncQueued=false,syncTimer=null,lastSyncOk=null;
+function saveSession(x){session=x;try{x?localStorage.setItem("juanSbSession",JSON.stringify(x)):localStorage.removeItem("juanSbSession")}catch(e){}}
+function setSync(msg){const el=$("syncState");if(el)el.textContent=msg}
+function hhmm(d){return d.toLocaleTimeString("en-GB",{timeZone:"Europe/Madrid",hour:"2-digit",minute:"2-digit"})}
+async function sbAuth(grant,body){
+ const r=await fetch(CFG.SUPABASE_URL+"/auth/v1/token?grant_type="+grant,{method:"POST",headers:{apikey:CFG.SUPABASE_ANON_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok){const er=new Error(d.error_description||d.msg||"Sign-in failed");er.status=r.status;throw er}
+ d.expires_at=d.expires_at||Math.floor(Date.now()/1000)+(d.expires_in||3600);return d}
+async function accessToken(){
+ if(!session)return null;
+ if(session.expires_at-60<Date.now()/1000){
+  try{saveSession(await sbAuth("refresh_token",{refresh_token:session.refresh_token}))}
+  catch(e){if(e.status&&e.status>=400&&e.status<500){saveSession(null);updateAuthUi();throw new Error("Signed out. Sign in again.")}throw e}
+ }
+ return session.access_token}
+async function sbRest(path,opts={}){
+ const t=await accessToken();if(!t)throw new Error("Not signed in");
+ const r=await fetch(CFG.SUPABASE_URL+"/rest/v1/"+path,{...opts,headers:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(opts.headers||{})}});
+ if(!r.ok)throw new Error("Sync error "+r.status+": "+(await r.text()).slice(0,140));
+ const txt=await r.text();return txt?JSON.parse(txt):null}
+function scheduleSync(){if(!SYNC_ON||!session)return;clearTimeout(syncTimer);syncTimer=setTimeout(sync,700)}
+async function sync(){
+ if(!SYNC_ON||!session)return;
+ if(syncing){syncQueued=true;return}
+ syncing=true;setSync("Syncing…");
+ try{
+  const rows=await sbRest("jobs?select=id,data&limit=5000");
+  const map=new Map(jobs.map(j=>[j.id,j]));const remote=new Map();let pulled=0;
+  rows.forEach(r=>{const d=r.data||{};d.id=r.id;d.updatedAt=d.updatedAt||EPOCH;remote.set(r.id,d);
+   const l=map.get(r.id);if(!l||d.updatedAt>l.updatedAt){map.set(r.id,d);pulled++}});
+  const push=[...map.values()].filter(j=>{const r=remote.get(j.id);return !r||j.updatedAt>r.updatedAt});
+  jobs=[...map.values()];persist();
+  for(let i=0;i<push.length;i+=200){
+   await sbRest("jobs?on_conflict=user_id,id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},
+    body:JSON.stringify(push.slice(i,i+200).map(j=>({user_id:session.user.id,id:j.id,data:j,updated_at:j.updatedAt})))})}
+  lastSyncOk=new Date();render();setSync("Synced "+hhmm(lastSyncOk)+(pulled||push.length?" · "+pulled+" in, "+push.length+" out":""));
+ }catch(e){
+  setSync(navigator.onLine===false||(e&&e.name==="TypeError")?"Offline. Changes are saved on this device and will sync later.":"Sync problem: "+e.message);
+ }finally{syncing=false;if(syncQueued){syncQueued=false;scheduleSync()}}
+}
+function updateAuthUi(){
+ const on=!!session;
+ $("authSignedIn").style.display=on?"block":"none";$("authForm").style.display=on?"none":"block";
+ if(on)$("authWho").textContent="Signed in as "+((session.user&&session.user.email)||"your account")+".";
+ if(!SYNC_ON)setSync("Sync not configured. Data stays on this device.");
+ else if(!on)setSync("Not signed in. Open Account & sync to sign in.");
+ renderBackupWarn()}
+$("syncBtn").onclick=()=>{if(!SYNC_ON){alert("Sync is not configured yet.");return}updateAuthUi();$("authMsg").textContent="";$("authDialog").showModal()};
+$("closeAuth").onclick=()=>$("authDialog").close();
+$("syncNowBtn").onclick=()=>{$("authDialog").close();sync()};
+$("signOutBtn").onclick=()=>{if(confirm("Sign out? Your data stays on this device."))saveSession(null);$("authDialog").close();updateAuthUi()};
+$("authForm").onsubmit=async e=>{e.preventDefault();$("authMsg").textContent="Signing in…";
+ try{saveSession(await sbAuth("password",{email:$("authEmail").value.trim(),password:$("authPass").value}));$("authPass").value="";$("authDialog").close();updateAuthUi();sync()}
+ catch(err){$("authMsg").textContent=(err&&err.name==="TypeError")?"No connection.":err.message}};
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")scheduleSync()});
+window.addEventListener("online",scheduleSync);
+setInterval(()=>{if(document.visibilityState==="visible")scheduleSync()},60000);
+updateAuthUi();
+render();
+if(session)sync();
+if("serviceWorker" in navigator && location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").then(r=>{r.update&&r.update()}).catch(()=>{});
+</script>
+</body></html>
